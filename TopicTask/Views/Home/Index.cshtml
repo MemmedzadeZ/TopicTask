@@ -1,0 +1,123 @@
+﻿@using Microsoft.AspNetCore.Html
+
+@{
+    ViewData["Title"] = "Home Page";
+
+
+}
+<div class="container">
+
+    <div class="mb-3 d-flex justify-content-center">
+        <form method="post" action="/Home/AddRabbitMQDivision" class="d-flex align-items-center gap-2">
+            <input type="text" name="name" id="newDivisionName" placeholder="Write new Division"
+                   class="form-control rounded-pill shadow-sm" style="width: 300px;" />
+            <input type="hidden" name="parentName" id="parentName" />
+            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow">Add</button>
+        </form>
+    </div>
+
+    <div id="divisionList" class="text-center">
+        @foreach (var division in Model)
+        {
+            <div id="DD@division.Name" class="card mb-3 shadow-sm" style="border: 1px solid #ddd; border-radius: 10px; padding: 10px;">
+                <p onclick="selectDivision('@division.Name', event)" class="mb-0 fw-bold text-primary"
+                   style="cursor: pointer; font-size: 1.2rem;">@division.Name</p>
+
+                @if (division.RabbitMQDivisions != null && division.RabbitMQDivisions.Count > 0)
+                {
+                    @RenderSubDivisions(division.RabbitMQDivisions, division.Name)
+                }
+            </div>
+        }
+    </div>
+
+    <div class="mt-3 text-center">
+        <form method="post" class="d-flex justify-content-center gap-2" id="messageForm">
+            <input id="newSubDivisionName" placeholder="Write Message"
+                   class="form-control rounded-pill shadow-sm" style="width: 300px;" />
+            <input id="sendMessageRMQInput" type="hidden" name="divisionName" />
+            <button type="button" class="btn btn-success rounded-pill px-4 shadow" onclick="handleFormSubmission(event)">
+                Send Message
+            </button>
+        </form>
+    </div>
+
+    <div class="mt-3 text-center">
+        <h5 class="text-secondary">Selected Division Path:</h5>
+        <p id="selectedDivisionPath" class="text-primary fw-bold">None</p>
+    </div>
+</div>
+
+<style>
+    #divisionList {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    #divisionList .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #divisionList .card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    #divisionList ul {
+        padding-left: 20px;
+        border-left: 2px dashed #ddd;
+        margin-top: 10px;
+    }
+
+    #divisionList li {
+        padding: 5px 0;
+    }
+
+    #divisionList p {
+        margin: 0;
+    }
+
+    #divisionList p:hover {
+        text-decoration: underline;
+        color: #007bff;
+    }
+
+    #selectedDivisionPath {
+        font-size: 1.2rem;
+        margin-top: 5px;
+    }
+
+    #messageForm input {
+        transition: box-shadow 0.2s;
+    }
+
+    #messageForm input:focus {
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+    }
+</style>
+
+
+@functions {
+    public IHtmlContent RenderSubDivisions(List<CategoryModel> subDivisions, string parentDivisionName)
+    {
+        var htmlContent = new HtmlContentBuilder();
+
+        htmlContent.AppendHtml($"<ul style=\"list-style: none; \">");
+
+        foreach (var subDivision in subDivisions)
+        {
+            htmlContent.AppendHtml($"<li id=\"DD{subDivision.Name}\"> <p  onclick=\"selectDivision('{subDivision.Name}',event)\" style=\"cursor: pointer;\" >{subDivision.Name}</p>");
+
+            if (subDivision.SubCategories != null && subDivision.SubCategories.Count > 0)
+            {
+                htmlContent.AppendHtml(RenderSubDivisions(subDivision.SubCategories, parentDivisionName + "." + subDivision.Name));
+            }
+
+            htmlContent.AppendHtml("</li>");
+        }
+
+        htmlContent.AppendHtml("</ul>");
+
+        return htmlContent;
+    }
+}
